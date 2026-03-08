@@ -112,13 +112,16 @@ async function startServer() {
   });
 
   // Cấu hình Middleware
-  if (process.env.NODE_ENV !== "production") {
-    // Chế độ phát triển (Development)
-    const vite = await createViteServer({
-      server: { middlewareMode: true },
-      appType: "spa",
-    });
-    app.use(vite.middlewares);
+ if (process.env.NODE_ENV !== "production") {
+  const { createServer } = await import("vite");
+
+  const vite = await createServer({
+    server: { middlewareMode: true },
+    appType: "spa",
+  });
+
+  app.use(vite.middlewares);
+
   } else {
     // Chế độ thực tế (Production) - Serve thư mục dist sau khi build
     app.use(express.static(path.join(__dirname, "dist")));
