@@ -115,10 +115,25 @@ const [opponentLeft, setOpponentLeft] = useState(false);
 
   useEffect(() => {
   if (gameMode === 'online' && !socketRef.current) {
+// kết nối WebSocket tới server Render
+const socket = new WebSocket("wss://memory-quest-2.onrender.com");
 
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const socket = new WebSocket(`${protocol}//${window.location.host}`);
+socket.onopen = () => {
+  console.log("Đã kết nối tới server");
+};
 
+socket.onmessage = (event) => {
+  const data = JSON.parse(event.data);
+  console.log("Nhận dữ liệu:", data);
+};
+
+socket.onerror = (error) => {
+  console.error("Lỗi WebSocket:", error);
+};
+
+socket.onclose = () => {
+  console.log("Kết nối đã đóng");
+};
     socket.onopen = () => {
       console.log("Connected to server");
     };
