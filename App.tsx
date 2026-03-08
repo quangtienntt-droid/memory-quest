@@ -272,7 +272,17 @@ const App: React.FC = () => {
     soundService.toggle(newState);
     if (newState) soundService.playFlip();
   };
+const handleExitGame = () => {
+  if (socketRef.current && gameMode === "online") {
+    socketRef.current.send(
+      JSON.stringify({
+        type: "PLAYER_EXIT"
+      })
+    );
+  }
 
+  setGameState("setup");
+};
   const startWithSound = () => {
     soundService.toggle(true);
     setIsSoundEnabled(true);
@@ -822,7 +832,7 @@ const App: React.FC = () => {
         {gameState === 'online_lobby' && (
           <div className="w-full max-w-xl animate-in zoom-in duration-500">
             <div className="bg-slate-900/40 backdrop-blur-3xl border border-white/10 rounded-[2rem] md:rounded-[3rem] p-5 md:p-10 shadow-2xl relative text-center">
-              <button onClick={() => setGameState('setup')} className="absolute top-4 left-4 md:top-8 md:left-8 p-2 text-slate-500 hover:text-white">
+              <button onClick={handleExitGame} className="absolute top-4 left-4 md:top-8 md:left-8 p-2 text-slate-500 hover:text-white">
                 <ChevronLeft className="w-5 h-5 md:w-6 md:h-6" />
               </button>
               
@@ -891,7 +901,7 @@ const App: React.FC = () => {
         {gameState === 'stage_select' && (
           <div className="w-full max-w-2xl animate-in slide-in-from-bottom-8 duration-500">
              <div className="bg-slate-900/40 backdrop-blur-3xl border border-white/10 rounded-[2rem] md:rounded-[2.5rem] p-5 md:p-12 shadow-2xl relative">
-              <button onClick={() => setGameState('setup')} className="absolute top-4 left-4 md:top-6 md:left-6 p-2 text-slate-500 hover:text-white transition-colors">
+               <button onClick={handleExitGame}className="absolute top-4 left-4 md:top-6 md:left-6 p-2 text-slate-500 hover:text-white transition-colors">
                 <ChevronLeft className="w-5 h-5 md:w-6 md:h-6" />
               </button>
               <h2 className="text-2xl md:text-3xl font-black mb-1 md:mb-2 text-center">Bản Đồ Ải</h2>
@@ -1024,7 +1034,7 @@ const App: React.FC = () => {
         {gameState === 'idle' && (
           <div className="w-full max-w-xl animate-in fade-in zoom-in duration-500">
             <div className="bg-slate-900/40 backdrop-blur-3xl border border-white/10 rounded-[2rem] md:rounded-[2.5rem] p-5 md:p-12 shadow-2xl relative text-center">
-              <button onClick={() => setGameState('setup')} className="absolute top-4 left-4 md:top-6 md:left-6 p-2 text-slate-500 hover:text-white transition-colors">
+              <button onClick={handleExitGame} className="absolute top-4 left-4 md:top-6 md:left-6 p-2 text-slate-500 hover:text-white transition-colors">
                 <ChevronLeft className="w-5 h-5 md:w-6 md:h-6" />
               </button>
               <LayoutGrid className="w-8 h-8 md:w-10 md:h-10 text-indigo-400 mx-auto mb-4 md:mb-6" />
@@ -1190,7 +1200,7 @@ const App: React.FC = () => {
               </div>
 
               <div className="flex gap-2 md:gap-3">
-                <button onClick={() => setGameState('setup')} className="flex-1 py-3 md:py-5 bg-white/5 hover:bg-white/10 text-white rounded-xl md:rounded-2xl font-black text-xs md:text-sm border border-white/10 transition-all">Cài Đặt</button>
+               <button onClick={handleExitGame}className="flex-1 py-3 md:py-5 bg-white/5 hover:bg-white/10 text-white rounded-xl md:rounded-2xl font-black text-xs md:text-sm border border-white/10 transition-all">Cài Đặt</button>
                 <button onClick={handleWonScreenAction} className="flex-[2] py-3 md:py-5 bg-white text-slate-900 rounded-xl md:rounded-2xl font-black text-base md:text-lg shadow-xl hover:scale-[1.02] transition-all flex items-center justify-center gap-2 md:gap-3">
                   {gameMode !== 'single' ? (
                     <><RotateCcw className="w-4 h-4 md:w-5 md:h-5" /> Chơi Lại</>

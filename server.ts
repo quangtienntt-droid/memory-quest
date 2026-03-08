@@ -85,7 +85,32 @@ async function startServer() {
               p.ws.send(JSON.stringify({ type: "GAME_STARTED", payload: message.payload }));
             });
             break;
+            
           }
+          case "PLAYER_EXIT": {
+  if (!currentRoom || !rooms.has(currentRoom)) return;
+
+  const room = rooms.get(currentRoom)!;
+
+  // gửi thông báo cho người còn lại
+  room.players.forEach(p => {
+    if (p.ws !== ws) {
+      p.ws.send(JSON.stringify({
+        type: "OPPONENT_LEFT",
+        payload: "Đối thủ đã thoát trận!"
+      }));
+    }
+  });
+
+  // xóa người chơi khỏi phòng
+  room.players = room.players.filter(p => p.ws !== ws);
+
+  if (room.players.length === 0) {
+    rooms.delete(currentRoom);
+  }
+
+  break;
+}
         }
       } catch (e) {
         console.error("Lỗi xử lý message:", e);
