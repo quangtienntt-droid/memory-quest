@@ -100,6 +100,8 @@ const App: React.FC = () => {
   const timerIntervalRef = useRef<number | null>(null);
   const noticeTimeoutRef = useRef<number | null>(null);
 
+const [players, setPlayers] = useState<{id:string,name:string}[]>([]);
+const [opponentLeft, setOpponentLeft] = useState(false);
   // Sync Data
   useEffect(() => {
     localStorage.setItem('mq_xp', xp.toString());
@@ -129,25 +131,30 @@ const App: React.FC = () => {
 
       switch (message.type) {
 
-        case "ROOM_UPDATE":
-          const { players, isHost: hostStatus } = message.payload;
+  case "ROOM_UPDATE": {
 
-          setIsHost(hostStatus);
+  const { players, isHost } = message.payload;
 
-          if (players.length > 1) {
+  setIsHost(isHost);
 
-            const opponent = players.find((p: any) => p.name !== player1Name);
+  if (players.length === 1) {
+    setPlayer1Name(players[0].name);
+    setOpponentName("Đang chờ...");
+    setIsOpponentReady(false);
+  }
 
-            if (opponent) {
-              setOpponentName(opponent.name);
-              setIsOpponentReady(true);
+  if (players.length === 2) {
+    setPlayer1Name(players[0].name);
+    setOpponentName(players[1].name);
+    setIsOpponentReady(true);
+  }
 
-              if (isSoundEnabled) soundService.playMatch();
-            }
+  break;
 
-          }
 
-          break;
+
+
+}
 
         case "GAME_STARTED":
 
@@ -190,7 +197,14 @@ const App: React.FC = () => {
           }
 
           break;
+case "OPPONENT_LEFT":
 
+  setOpponentLeft(true);
+
+  setOpponentName("Đang chờ...");
+  setIsOpponentReady(false);
+
+  break;
       }
 
     };
@@ -210,7 +224,7 @@ const App: React.FC = () => {
     }
   };
 
-}, [gameMode, player1Name, isSoundEnabled]);
+}, [gameMode]);
 
   // Online Lobby Countdown
   useEffect(() => {
@@ -872,7 +886,11 @@ const handleExitGame = () => {
                     <User className="w-5 h-5 md:w-6 md:h-6 text-white" />
                   </div>
                   <span className="text-[10px] md:text-xs font-bold truncate max-w-full px-1">{player1Name || 'Bạn'}</span>
-                  <div className="px-2 py-0.5 bg-indigo-500/20 text-indigo-400 text-[8px] md:text-[10px] font-black rounded-full uppercase">Chủ Phòng</div>
+                  {isHost && (
+  <div className="px-2 py-0.5 bg-indigo-500/20 text-indigo-400 text-[8px] md:text-[10px] font-black rounded-full uppercase">
+    Chủ Phòng
+  </div>
+)}
                 </div>
                 <div className={`p-3 md:p-4 rounded-xl md:rounded-2xl border transition-all flex flex-col items-center gap-1.5 md:gap-2 ${isOpponentReady ? 'bg-white/5 border-emerald-500/30' : 'bg-black/20 border-white/5 border-dashed opacity-50'}`}>
                   <div className={`w-10 h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center border-2 ${isOpponentReady ? 'bg-emerald-600 border-emerald-400' : 'bg-slate-800 border-slate-700'}`}>
@@ -1145,10 +1163,10 @@ const handleExitGame = () => {
                   <RotateCcw className="w-4 h-4" /> Chơi Lại
                 </button>
                 <button 
-                  onClick={() => {
-                    setShowExitConfirm(false);
-                    setGameState('intro');
-                  }}
+                   onClick={() => {
+    setShowExitConfirm(false);
+    handleExitGame();
+  }}
                   className="w-full py-4 bg-rose-600/10 border border-rose-500/20 text-rose-400 rounded-2xl font-black text-sm md:text-base hover:bg-rose-600/20 transition-all"
                 >
                   Thoát Về Màn Hình Chính
@@ -1216,6 +1234,31 @@ const handleExitGame = () => {
         )}
 
       </main>
+      {opponentLeft  && (
+  <div className="fixed inset-0 z-[200] flex items-center justify-center backdrop-blur-xl bg-black/60">
+    <div className="bg-slate-900 border border-white/10 p-8 rounded-[2rem] text-center shadow-2xl max-w-sm w-full">
+
+      <h3 className="text-2xl font-black text-rose-400 mb-2">
+        Đối thủ đã rời trận
+      </h3>
+
+      <p className="text-slate-400 text-sm mb-6">
+        Trận đấu đã kết thúc vì đối thủ thoát.
+      </p>
+
+      <button
+        onClick={() => {
+          setOpponentLeft(false);
+          setGameState("intro");
+        }}
+        className="w-full py-3 bg-indigo-600 text-white rounded-2xl font-black hover:bg-indigo-500 transition-all"
+      >
+        Về màn hình chính
+      </button>
+
+    </div>
+  </div>
+)}
 
       <footer className="mt-auto pt-6 text-slate-700 text-[9px] font-bold tracking-[0.5em] uppercase">
         Memory Quest Pro • 2025 Experience
