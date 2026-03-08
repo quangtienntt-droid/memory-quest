@@ -110,41 +110,57 @@ const App: React.FC = () => {
     localStorage.setItem('mq_sound', isSoundEnabled.toString());
     localStorage.setItem('mq_username', player1Name);
   }, [xp, unlockedStage, ownedBadges, activeCardBack, activeBackground, isSoundEnabled, player1Name]);
+useEffect(() => {
+  if (gameMode === 'online' && !socketRef.current) {
 
-  // WebSocket Setup
- useEffect(() => {
-  if (gameMode === "online" && !socketRef.current) {
-
-    const SERVER_URL = "wss://memory-quest.onrender.com";
-    const socket = new WebSocket(SERVER_URL);
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const socket = new WebSocket(`${protocol}//${window.location.host}/ws`);
 
     socket.onopen = () => {
       console.log("Connected to server");
     };
 
     socket.onmessage = (event) => {
+      console.log("Server message:", event.data);
+
       const message = JSON.parse(event.data);
 
       switch (message.type) {
+
         case "ROOM_UPDATE":
-          const { players, isHost } = message.payload;
-          setIsHost(isHost);
+          const { players, isHost: hostStatus } = message.payload;
+          setIsHost(hostStatus);
+
+          if (players.length > 1) {
+            const opponent = players.find((p: any) => p.name !== player1Name);
+            if (opponent) {
+              setOpponentName(opponent.name);
+              setIsOpponentReady(true);
+              if (isSoundEnabled) soundService.playMatch();
+            }
+          }
           break;
 
-        case "GAME_START":
-          console.log("Game started");
+        case "GAME_STARTED":
+          const { theme: t, difficulty: d, cards: c } = message.payload;
+          setTheme(t);
+          setDifficulty(d);
+          setCards(c);
+          setGameState('playing');
           break;
       }
     };
 
-    socket.onclose = () => {
-      console.log("Disconnected");
-      socketRef.current = null;
-    };
-
     socketRef.current = socket;
   }
-}, [gameMode]);
+
+  return () => {
+    if (socketRef.current) {
+      socketRef.current.close();
+      socketRef.current = null;
+    }
+  };
+}, [gameMode, player1Name, isSoundEnabled]);
 
   // Online Lobby Countdown
   useEffect(() => {
