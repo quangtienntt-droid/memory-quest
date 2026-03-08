@@ -110,17 +110,19 @@ const App: React.FC = () => {
     localStorage.setItem('mq_sound', isSoundEnabled.toString());
     localStorage.setItem('mq_username', player1Name);
   }, [xp, unlockedStage, ownedBadges, activeCardBack, activeBackground, isSoundEnabled, player1Name]);
-useEffect(() => {
+
+  useEffect(() => {
   if (gameMode === 'online' && !socketRef.current) {
 
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const socket = new WebSocket(`${protocol}//${window.location.host}/ws`);
+    const socket = new WebSocket(`${protocol}//${window.location.host}`);
 
     socket.onopen = () => {
       console.log("Connected to server");
     };
 
     socket.onmessage = (event) => {
+
       console.log("Server message:", event.data);
 
       const message = JSON.parse(event.data);
@@ -129,26 +131,73 @@ useEffect(() => {
 
         case "ROOM_UPDATE":
           const { players, isHost: hostStatus } = message.payload;
+
           setIsHost(hostStatus);
 
           if (players.length > 1) {
+
             const opponent = players.find((p: any) => p.name !== player1Name);
+
             if (opponent) {
               setOpponentName(opponent.name);
               setIsOpponentReady(true);
+
               if (isSoundEnabled) soundService.playMatch();
             }
+
           }
+
           break;
 
         case "GAME_STARTED":
+
           const { theme: t, difficulty: d, cards: c } = message.payload;
+
           setTheme(t);
           setDifficulty(d);
           setCards(c);
+
           setGameState('playing');
+          setScores({ 1: 0, 2: 0 });
+          setActivePlayer(1);
+
+          setFlippedIndices([]);
+          setIsProcessing(false);
+
+          if (isSoundEnabled) soundService.playFlip();
+
           break;
+
+        case "GAME_ACTION":
+
+          if (message.action === "FLIP") {
+
+            const index = message.payload.index;
+
+            setCards(prev => {
+
+              const newCards = [...prev];
+              newCards[index].isFlipped = true;
+
+              return newCards;
+
+            });
+
+            setFlippedIndices(prev => [...prev, index]);
+
+            if (isSoundEnabled) soundService.playFlip();
+
+          }
+
+          break;
+
       }
+
+    };
+
+    socket.onclose = () => {
+      console.log("WebSocket disconnected");
+      socketRef.current = null;
     };
 
     socketRef.current = socket;
@@ -160,6 +209,7 @@ useEffect(() => {
       socketRef.current = null;
     }
   };
+
 }, [gameMode, player1Name, isSoundEnabled]);
 
   // Online Lobby Countdown
